@@ -716,6 +716,16 @@ func (c *Conn) readResult(binary bool) (*mysql.Result, error) {
 	return c.readResultset(data, binary)
 }
 
+// ResetSession 对齐 database/sql driver.SessionResetter，
+// 归还连接池前重置所有 session 状态，防止污染下一个使用者。
+func (c *Conn) ResetSession() error {
+	if err := c.writeCommand(mysql.COM_RESET_CONNECTION); err != nil {
+		return err
+	}
+	_, err := c.readOK()
+	return err
+}
+
 func (c *Conn) IsAutoCommit() bool {
 	return c.status&mysql.SERVER_STATUS_AUTOCOMMIT > 0
 }
