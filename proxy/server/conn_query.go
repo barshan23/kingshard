@@ -52,6 +52,15 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	}()
 
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
+
+	// MySQL 8.0 兼容：移除已废弃的 query_cache 变量，替换 tx_isolation
+	sql = strings.ReplaceAll(sql, ", @@query_cache_size AS query_cache_size", "")
+	sql = strings.ReplaceAll(sql, ", @@query_cache_type AS query_cache_type", "")
+	sql = strings.ReplaceAll(sql, "@@session.tx_isolation", "@@session.transaction_isolation")
+	sql = strings.ReplaceAll(sql, "@@tx_isolation", "@@transaction_isolation")
+	sql = strings.ReplaceAll(sql, "@@session.tx_read_only", "@@session.transaction_read_only")
+	sql = strings.ReplaceAll(sql, "@@tx_read_only", "@@transaction_read_only")
+
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
 		golog.Error("server", "preHandleShard", err.Error(), 0,
@@ -163,7 +172,7 @@ func (c *ClientConn) getBackendConn(n *backend.Node, fromSlave bool) (co *backen
 	return
 }
 
-//获取shard的conn，第一个参数表示是不是select
+// 获取shard的conn，第一个参数表示是不是select
 func (c *ClientConn) getShardConns(fromSlave bool, plan *router.Plan) (map[string]*backend.BackendConn, error) {
 	var err error
 	if plan == nil || len(plan.RouteNodeIndexs) == 0 {
