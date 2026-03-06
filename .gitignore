@@ -1,5 +1,6 @@
 bin
 pkg
+vendor/
 .DS_Store
 y.output
 .idea
