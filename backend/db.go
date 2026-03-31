@@ -396,6 +396,8 @@ func (p *BackendConn) Close() {
 	if p != nil && p.Conn != nil {
 		if p.Conn.pkgErr != nil {
 			p.db.closeConn(p.Conn)
+		} else if err := p.Conn.ResetSession(); err != nil {
+			p.db.closeConn(p.Conn)
 		} else {
 			p.db.PushConn(p.Conn, nil)
 		}
